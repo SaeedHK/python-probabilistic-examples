@@ -6,6 +6,7 @@ authors = ["Saeed Hadikhanloo <saeed.hadikhanloo@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pymc3 = "^3.11.0"
 
 [tool.poetry.dev-dependencies]
 
