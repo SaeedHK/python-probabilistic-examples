@@ -7,6 +7,8 @@ authors = ["Saeed Hadikhanloo <saeed.hadikhanloo@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 pymc3 = "^3.11.0"
+numpy = "^1.20.1"
+matplotlib = "^3.3.4"
 
 [tool.poetry.dev-dependencies]
 
