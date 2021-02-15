@@ -49,15 +49,14 @@ with basic_model:
 
     for i in range(N):
         # No-U-Turn Sampler NUTS
+        print(f"Turn {i}")
         start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
-        print(start)
         time_zero = default_timer()
         trace = pm.sample(500, start=start, return_inferencedata=False)
         time_consumed = default_timer() - time_zero
         times_consumed.append(time_consumed)
-        print(time_consumed)
 
-    print(times_consumed)
+    print("Plotting the time consumed and save it to sampler.png")
     plt.plot(times_consumed)
     plt.savefig("sampler.png")
 
