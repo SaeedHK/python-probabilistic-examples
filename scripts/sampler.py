@@ -52,8 +52,9 @@ with basic_model:
     print(f"Tuning NUTS")
     print("=========================================")
     start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
+    nuts = pm.step_methods.hmc.nuts.NUTS()
     time_zero = default_timer()
-    trace_tuned = pm.sample(2000, return_inferencedata=False)
+    trace_tuned = pm.sample(2000, step=nuts, return_inferencedata=False)
     time_consumed = default_timer() - time_zero
 
     for i in range(N):
@@ -63,9 +64,7 @@ with basic_model:
         print("=========================================")
         start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
         time_zero = default_timer()
-        trace = pm.sample(
-            500, start=trace_tuned[-1], tune=0, return_inferencedata=False
-        )
+        trace = pm.sample(500, step=nuts, tune=False, return_inferencedata=False)
         time_consumed = default_timer() - time_zero
         times_consumed.append(time_consumed)
         print("-----------------------------------------")
