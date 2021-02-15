@@ -42,7 +42,7 @@ with basic_model:
 
     times_consumed = []
 
-    N = 2
+    N = 100
     alphas = norm.rvs(size=N)
     betas = halfnorm.rvs(size=(N, 2))
     sigmas = halfnorm.rvs(size=N)
@@ -59,5 +59,5 @@ with basic_model:
 
     print(times_consumed)
     plt.plot(times_consumed)
-    plt.show()
+    plt.savefig("sampler.png")
 
