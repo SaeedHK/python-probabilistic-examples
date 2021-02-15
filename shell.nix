@@ -7,5 +7,6 @@ with pkgs;
 mkShell {
   buildInputs = [
     poetry
+    black
   ];
 }
