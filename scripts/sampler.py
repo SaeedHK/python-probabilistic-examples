@@ -47,16 +47,32 @@ with basic_model:
     betas = halfnorm.rvs(size=(N, 2))
     sigmas = halfnorm.rvs(size=N)
 
+    i = 0
+    print("=========================================")
+    print(f"Tuning NUTS")
+    print("=========================================")
+    start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
+    time_zero = default_timer()
+    trace_tuned = pm.sample(2000, return_inferencedata=False)
+    time_consumed = default_timer() - time_zero
+
     for i in range(N):
         # No-U-Turn Sampler NUTS
+        print("=========================================")
         print(f"Turn {i}")
+        print("=========================================")
         start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
         time_zero = default_timer()
-        trace = pm.sample(500, start=start, return_inferencedata=False)
+        trace = pm.sample(
+            500, start=trace_tuned[-1], tune=0, return_inferencedata=False
+        )
         time_consumed = default_timer() - time_zero
         times_consumed.append(time_consumed)
+        print("-----------------------------------------")
+        print(f"Times consumed for turn {i}: {time_consumed}")
+        print("-----------------------------------------")
 
     print("Plotting the time consumed and save it to sampler.png")
+    print(times_consumed)
     plt.plot(times_consumed)
     plt.savefig("sampler.png")
-
