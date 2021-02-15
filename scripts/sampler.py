@@ -3,6 +3,7 @@ import pymc3 as pm
 from timeit import default_timer
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
+from pymc3.step_methods.hmc.nuts import NUTS
 
 
 print(f"Running on PyMC3 v{pm.__version__}")
@@ -47,15 +48,10 @@ with basic_model:
     betas = halfnorm.rvs(size=(N, 2))
     sigmas = halfnorm.rvs(size=N)
 
-    i = 0
     print("=========================================")
     print(f"Tuning NUTS")
     print("=========================================")
-    start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
-    nuts = pm.step_methods.hmc.nuts.NUTS()
-    time_zero = default_timer()
-    trace = pm.sample(2000, step=nuts, return_inferencedata=False)
-    time_consumed = default_timer() - time_zero
+    trace = pm.sample(2000, step=NUTS(), return_inferencedata=False)
     step_size_tuned = trace.get_sampler_stats("step_size")
 
     for i in range(N):
@@ -65,7 +61,12 @@ with basic_model:
         print("=========================================")
         start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
         time_zero = default_timer()
-        trace = pm.sample(500, step=nuts, tune=False, return_inferencedata=False)
+        trace = pm.sample(
+            500,
+            step=NUTS(step_scale=step_size_tuned[-1]),
+            tune=False,
+            return_inferencedata=False,
+        )
         time_consumed = default_timer() - time_zero
         times_consumed.append(time_consumed)
         print("-----------------------------------------")
