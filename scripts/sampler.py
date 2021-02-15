@@ -42,7 +42,7 @@ with basic_model:
 
     times_consumed = []
 
-    N = 100
+    N = 1
     alphas = norm.rvs(size=N)
     betas = halfnorm.rvs(size=(N, 2))
     sigmas = halfnorm.rvs(size=N)
@@ -54,8 +54,9 @@ with basic_model:
     start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
     nuts = pm.step_methods.hmc.nuts.NUTS()
     time_zero = default_timer()
-    trace_tuned = pm.sample(2000, step=nuts, return_inferencedata=False)
+    trace = pm.sample(2000, step=nuts, return_inferencedata=False)
     time_consumed = default_timer() - time_zero
+    print(trace.get_sampler_stats("tune"))
 
     for i in range(N):
         # No-U-Turn Sampler NUTS
