@@ -56,7 +56,7 @@ with basic_model:
     time_zero = default_timer()
     trace = pm.sample(2000, step=nuts, return_inferencedata=False)
     time_consumed = default_timer() - time_zero
-    print(trace.get_sampler_stats("tune"))
+    step_size_tuned = trace.get_sampler_stats("step_size")
 
     for i in range(N):
         # No-U-Turn Sampler NUTS
