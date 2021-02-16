@@ -4,6 +4,7 @@ from timeit import default_timer
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
 from pymc3.step_methods.hmc.nuts import NUTS
+from pymc3.step_methods.hmc import quadpotential
 
 
 print(f"Running on PyMC3 v{pm.__version__}")
@@ -43,7 +44,7 @@ with basic_model:
 
     times_consumed = []
 
-    N = 1
+    N = 100
     alphas = norm.rvs(size=N)
     betas = halfnorm.rvs(size=(N, 2))
     sigmas = halfnorm.rvs(size=N)
@@ -51,9 +52,12 @@ with basic_model:
     print("=========================================")
     print(f"Tuning NUTS")
     print("=========================================")
-    trace = pm.sample(2000, step=NUTS(), return_inferencedata=False)
-    step_size_tuned = trace.get_sampler_stats("step_size")
 
+    init_trace = pm.sample(draws=1000, tune=1000)
+    cov = np.atleast_1d(pm.trace_cov(init_trace))
+    potential = quadpotential.QuadPotentialFull(cov)
+
+    # with pm.Model() as model_new:  # reset model. If you use theano.shared you can also update the value of model1 above
     for i in range(N):
         # No-U-Turn Sampler NUTS
         print("=========================================")
@@ -61,12 +65,8 @@ with basic_model:
         print("=========================================")
         start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
         time_zero = default_timer()
-        trace = pm.sample(
-            500,
-            step=NUTS(step_scale=step_size_tuned[-1]),
-            tune=False,
-            return_inferencedata=False,
-        )
+        step = pm.NUTS(potential=potential)
+        trace = pm.sample(draws=1000, tune=100, step=step)  # good
         time_consumed = default_timer() - time_zero
         times_consumed.append(time_consumed)
         print("-----------------------------------------")
