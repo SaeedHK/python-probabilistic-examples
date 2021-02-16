@@ -25,7 +25,7 @@ Y = alpha + beta[0] * X1 + beta[1] * X2 + np.random.randn(size) * sigma
 
 basic_model = pm.Model()
 
-with basic_model:
+with basic_model as m:
 
     # Priors for unknown model parameters
     alpha = pm.Normal("alpha", mu=0, sigma=10)
@@ -53,9 +53,14 @@ with basic_model:
     print(f"Tuning NUTS")
     print("=========================================")
 
-    init_trace = pm.sample(draws=1000, tune=1000)
+    n_chains = 4
+    init_trace = pm.sample(draws=1000, tune=1000, cores=n_chains)
     cov = np.atleast_1d(pm.trace_cov(init_trace))
+    start = list(np.random.choice(init_trace, n_chains))
     potential = quadpotential.QuadPotentialFull(cov)
+    step_size = init_trace.get_sampler_stats("step_size_bar")[-1]
+    size = m.bijection.ordering.size
+    step_scale = step_size * (size ** 0.25)
 
     # with pm.Model() as model_new:  # reset model. If you use theano.shared you can also update the value of model1 above
     for i in range(N):
@@ -63,10 +68,13 @@ with basic_model:
         print("=========================================")
         print(f"Turn {i}")
         print("=========================================")
-        start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
+        # start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
         time_zero = default_timer()
-        step = pm.NUTS(potential=potential)
-        trace = pm.sample(draws=1000, tune=100, step=step)  # good
+        step = pm.NUTS(
+            potential=potential, adapt_step_size=False, step_scale=step_scale
+        )
+        step.tune = False
+        trace = pm.sample(draws=100, step=step, tune=0, cores=n_chains, start=start)
         time_consumed = default_timer() - time_zero
         times_consumed.append(time_consumed)
         print("-----------------------------------------")
