@@ -7,9 +7,6 @@ from pymc3.step_methods.hmc.nuts import NUTS
 from pymc3.step_methods.hmc import quadpotential
 
 
-print(f"Running on PyMC3 v{pm.__version__}")
-
-
 alpha, sigma = 1, 1
 beta = [1, 2.5]
 
@@ -38,21 +35,10 @@ with basic_model as m:
     # Likelihood (sampling distribution) of observations
     Y_obs = pm.Normal("Y_obs", mu=mu, sigma=sigma, observed=Y)
 
-    # maximum a posteriori (MAP) estimate:
-    # map_estimate = pm.find_MAP(model=basic_model)
-    # print(f"Map Estimate:{map_estimate}")
+    # number of sampling rounds
+    N = 1
 
-    times_consumed = []
-
-    N = 100
-    alphas = norm.rvs(size=N)
-    betas = halfnorm.rvs(size=(N, 2))
-    sigmas = halfnorm.rvs(size=N)
-
-    print("=========================================")
-    print(f"Tuning NUTS")
-    print("=========================================")
-
+    # Tuning NUTS
     n_chains = 4
     init_trace = pm.sample(draws=1000, tune=1000, cores=n_chains)
     cov = np.atleast_1d(pm.trace_cov(init_trace))
@@ -62,24 +48,13 @@ with basic_model as m:
     size = m.bijection.ordering.size
     step_scale = step_size * (size ** 0.25)
 
-    # with pm.Model() as model_new:  # reset model. If you use theano.shared you can also update the value of model1 above
-    for i in range(N):
-        # No-U-Turn Sampler NUTS
-        print("=========================================")
-        print(f"Turn {i}")
-        print("=========================================")
-        # start = {"alpha": alphas[i], "beta": betas[i], "sigma": sigmas[i]}
-        time_zero = default_timer()
-        step = pm.NUTS(potential=potential, adapt_step_size=False, step_scale=step_scale)
-        step.tune = False
-        trace = pm.sample(draws=100, step=step, tune=0, cores=n_chains, start=start)
-        time_consumed = default_timer() - time_zero
-        times_consumed.append(time_consumed)
-        print("-----------------------------------------")
-        print(f"Times consumed for turn {i}: {time_consumed}")
-        print("-----------------------------------------")
+    # Setting a tuned NUTS step
+    step = pm.NUTS(potential=potential, adapt_step_size=False, step_scale=step_scale)
+    step.tune = False
 
-    print("Plotting the time consumed and save it to sampler.png")
-    print(times_consumed)
-    plt.plot(times_consumed)
-    plt.savefig("sampler.png")
+    # Sampling using a tuned NUTS step
+    for i in range(N):
+        time_zero = default_timer()
+        trace = pm.sample(draws=4000, step=step, tune=0, cores=n_chains, start=start)
+        time_consumed = default_timer() - time_zero
+        print(time_consumed)
